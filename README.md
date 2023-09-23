@@ -14,7 +14,7 @@
    * vpn-server port
    * user password
    * encryption method
-5. After the data has been successfully retrieved from the database, flask-app creates json-file and sends it back to user Outline app through HTTPS.
+5. After the data has been successfully retrieved from the database, flask-app creates json-file and sends it back to Outline app through HTTPS.
 6. Outline client connect user to vpn-server using credentials from json-file.
 
 ![database_schema](docs/schema.jpg)
