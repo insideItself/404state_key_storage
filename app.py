@@ -1,13 +1,22 @@
 import requests
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from config import FLASK_APP_PORT
+from flask import Flask, jsonify, request, abort
+from flask_cors import cross_origin
+from config import FLASK_APP_PORT, check_auth
 import socket
 from database.database_manager import DatabaseManager
 
 
 app = Flask(__name__)
-CORS(app)
+
+
+@app.before_request
+def before_request():
+    # Skip authentication for the GET endpoint
+    if request.method == 'GET' and request.path.startswith('/key/'):
+        return
+    auth = request.authorization
+    if not check_auth(auth):
+        abort(401)
 
 
 @app.route("/")
@@ -17,6 +26,7 @@ def return_key():
 
 
 @app.route("/key/<name>/<uuid>", methods=['GET'])
+@cross_origin()  # turn on CORS to make this endpoint available from Outline Client
 def get_key_by_name_and_uuid(name: str, uuid: str):
 
     try:
