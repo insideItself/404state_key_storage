@@ -3,6 +3,7 @@ from flask_cors import CORS
 from config import FLASK_APP_PORT
 import socket
 
+
 app = Flask(__name__)
 CORS(app)
 
