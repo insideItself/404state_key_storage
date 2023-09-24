@@ -159,6 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# project-specified shit
+# project-specified settings
 server/*.txt
 .DS_Store
+
+# Ignore all files in database_storage but keep the directory
+database_storage/*

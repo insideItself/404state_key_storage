@@ -14,7 +14,10 @@ ENV/
 env.bak/
 venv.bak/
 
-# project-specified shit
+# project-specified settings
 docker-compose.yml
 README.md
 Dockerfile.flask_app
+
+# Ignore all files in database_storage but keep the directory
+database_storage/
