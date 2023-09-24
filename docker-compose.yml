@@ -12,6 +12,8 @@ services:
       - database
     env_file:
       - ./.env
+    environment:
+      - DOCKER_CONTAINER=1 # set variable DOCKER_CONTAINER to use it in config.py file for some if-else conditions
     ports:
       - "${FLASK_APP_PORT}"
 
