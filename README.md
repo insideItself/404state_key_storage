@@ -2,7 +2,7 @@
 
 1. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
 2. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
-3. Run project using command `docker-compose up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
+3. Run project using command `docker compose up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
 ---
 ### Project Schema
 

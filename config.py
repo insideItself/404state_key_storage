@@ -8,7 +8,7 @@ In this case, the load_dotenv() function is called to load the environment varia
 """
 
 # Check if running inside a Docker container
-running_in_docker: int | None = os.environ.get('DOCKER_CONTAINER') is not None
+running_in_docker: bool = os.environ.get('DOCKER_CONTAINER') is not None
 
 # Load environment variables from .env file if not running in Docker
 if not running_in_docker:
