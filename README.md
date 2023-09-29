@@ -5,7 +5,7 @@
 1. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
 2. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
 3. Create directory for your database, for example `./database_for_project`.
-4. Install `mkcert` and setup SSL certificates for localhost: https://github.com/FiloSottile/mkcert.
+4. Install `mkcert` and setup SSL certificates for localhost: https://github.com/FiloSottile/mkcert. Specify path to your cerificates in `.env` file.
 5. Run project using command `docker compose -f docker-compose.local.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
 6. Stop project using command `docker compose -f docker-compose.local.yml down` if necessary.
 
@@ -14,7 +14,7 @@
 1. Install docker, docker-compose, python, pip3, git, openssh-server on VDS.
 2. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
 3. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
-4. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in .env file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
+4. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
 5. Set up a domain for your server IP-address.
 6. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
 7. Stop project using command `docker compose -f docker-compose.yml down` if necessary.

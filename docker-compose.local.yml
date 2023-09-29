@@ -21,7 +21,7 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs
+      - ${LOCAL_SSL_CERTIFICATES_PATH}:/etc/nginx/certs
     depends_on:
       - app
     ports:
