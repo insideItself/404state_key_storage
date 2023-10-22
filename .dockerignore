@@ -16,6 +16,7 @@ venv.bak/
 
 # project-specified settings
 docker-compose.yml
+docker-compose.local.yml
 README.md
 Dockerfile.flask_app
 
