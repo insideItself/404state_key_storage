@@ -2,7 +2,7 @@ import requests
 from requests.exceptions import RequestException
 from flask import Flask, jsonify, request, abort, Response, Blueprint
 from flask_cors import cross_origin
-from config import FLASK_APP_PORT, check_auth
+from config import FLASK_APP_PORT
 import socket
 from database.database_manager import DatabaseManager
 from routes.servers import servers_bp

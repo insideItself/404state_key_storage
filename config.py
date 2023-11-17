@@ -41,15 +41,3 @@ POSTGRES_CREDENTIALS: dict[str, str] = {
 
 BASIC_AUTH_USERNAME = os.getenv("BASIC_AUTH_USERNAME")
 BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
-
-
-# Implement basic auth check for flask-app
-def check_auth():
-    auth = request.authorization
-    if not auth or not auth.username or not auth.password:
-        abort(401)
-    # Replace 'username' and 'password' with your credentials
-    is_valid = (hmac.compare_digest(auth.username, BASIC_AUTH_USERNAME) and
-                hmac.compare_digest(auth.password, BASIC_AUTH_PASSWORD))
-    if not is_valid:
-        abort(401)
