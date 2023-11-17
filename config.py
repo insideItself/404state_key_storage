@@ -1,5 +1,7 @@
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
+# from werkzeug.security import generate_password_hash, check_password_hash
+from flask import request, abort
+import hmac
 
 """
 This code first checks whether the DOCKER_CONTAINER environment variable is set.
@@ -42,8 +44,12 @@ BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
 
 
 # Implement basic auth check for flask-app
-def check_auth(auth):
+def check_auth():
+    auth = request.authorization
     if not auth or not auth.username or not auth.password:
-        return False
-    return auth.username == BASIC_AUTH_USERNAME and check_password_hash(
-        generate_password_hash(BASIC_AUTH_PASSWORD), auth.password)
+        abort(401)
+    # Replace 'username' and 'password' with your credentials
+    is_valid = (hmac.compare_digest(auth.username, BASIC_AUTH_USERNAME) and
+                hmac.compare_digest(auth.password, BASIC_AUTH_PASSWORD))
+    if not is_valid:
+        abort(401)

@@ -168,3 +168,6 @@ certs/
 
 # Ignore all files in database_storage but keep the directory
 database_storage/*
+
+# Ignore pytest cache
+.pytest_cache

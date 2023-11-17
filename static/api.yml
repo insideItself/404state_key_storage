@@ -1,0 +1,343 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: ShadowTrail VPN Key Storage API
+paths:
+  /keys/{key_id}:
+    get:
+      tags:
+        - shadowtrail dynamic keys
+      description: Return dynamic VPN key data.
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tg_user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The key was successfully found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server:
+                    type: string
+                  server_port:
+                    type: integer
+                  password:
+                    type: string
+                  method:
+                    type: string
+        '400':
+          description: Both name and uuid are required
+        '404':
+          description: Key not found
+        '500':
+          description: Unexpected error occurred
+  /locations:
+    get:
+      tags:
+        - locations
+      description: | 
+        Return list of locations.  
+        - if active_servers = true, returns locations that have active servers
+        - if active_servers = false, returns locations that doesn't have active servers
+        - if active_servers is not set, returns all locations
+      parameters:
+        - name: active_servers
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Locations information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: integer
+                    description: Total count of unique locations.
+                  locations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        location:
+                          type: string
+                          description: Location name (EN)
+                        location_ru:
+                          type: string
+                          description: Location name (RU)
+                        iso:
+                          type: string
+                          description: Location ISO code.
+              example:
+                total_count: 2
+                locations:
+                  - location: Netherlands
+                    location_ru: Нидерланды
+                    iso: NL
+                  - location: USA
+                    location_ru: США
+                    iso: US
+        '500':
+          description: Unexpected error occurred
+  /servers:
+    get:
+      tags:
+        - servers
+      description: Return servers identifiers and their locations.
+      parameters:
+        - name: location
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Servers information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: integer
+                    description: Total count of servers.
+                  servers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: Server unique identifier.
+                        location:
+                          type: string
+                          description: Server location.
+                        unused_keys:
+                          type: integer
+                          description: Count of unused outline keys on server.
+              example:
+                total_count: 2
+                servers:
+                  - id: 1
+                    location: Netherlands
+                    unused_keys: 2
+                  - id: 2
+                    location: USA
+                    unused_keys: 0
+        '404':
+          description: Location not found
+        '500':
+          description: Unexpected error occurred
+    post:
+      tags:
+        - servers
+      description: |
+        Create new outline server.  
+        If 201 response, tables outline_server and outline_server_info will be populated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                api_url:
+                  type: string
+                  description: Outline server api url.
+                location:
+                  type: string
+                  description: Outline server location.
+                provider:
+                  type: string
+                  description: VDS server provider.
+              required:
+                - api_url
+                - location
+                - provider
+      responses:
+        '201':
+          description: Successfully created outline server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Server unique identifier.
+        '400':
+          description: Missing required parameters
+        '404':
+          description: Server was found but unexpected error occurred
+        '409':
+          description: Server with provided api_url already exists in database
+        '422':
+          description: Invalid URL scheme
+        '500':
+          description: Unexpected error occurred
+  /outline_keys/{outline_server_id}:
+    get:
+      tags:
+        - outline keys
+      description: Return list of outline keys from outline server
+      parameters:
+        - name: outline_server_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: currently_used
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            description: | 
+              Optional parameter.   
+              If true, returns list of currently used outline keys.
+              If false, returns list of unused outline keys.
+      responses:
+        '200':
+          description: Keys information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: integer
+                    description: Total count of servers.
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: Outline key unique identifier.
+                        access_url:
+                          type: string
+                          description: Outline key access url.
+                        currently_used:
+                          type: boolean
+                          description: Parameter that shows whether the key is used or not.
+              example:
+                total_count: 2
+                keys:
+                  - uuid: "08e97dff-0751-40bf-ac8a-45551a7415d6"
+                    access_url: "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpjbjZhb2thNU5FQk9ZQXZxM1BTNm1L@5.8.00.108:55951/?outline=1"
+                    currently_used: true
+                  - uuid: "5cb6f2ac-8fe1-4844-bd0c-c41acedc310d"
+                    access_url: "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpYNDlKSWV2NXRHZ2FlOHRMUENCOXM3@5.8.00.108:55951/?outline=1"
+                    currently_used: false
+        '400':
+          description: | 
+
+            One of the errors occurred:  
+            - Invalid 'currently_used' parameter value. It must be 'true' or 'false';  
+            - Invalid 'limit' parameter. It must be a positive integer.
+        '404':
+          description: Server not found
+        '500':
+          description: Unexpected error occurred
+  /outline_keys:
+    post:
+      tags:
+        - outline keys
+      description: Create a single or multiple outline keys.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  outline_server_id:
+                    type: integer
+                    description: Outline server unique identifier.
+                  number_of_keys:
+                    type: integer
+                    description: Number of keys to be created.
+      responses:
+        '201':
+          description: Successfully created outline key(s)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: integer
+                    description: Total count of created keys.
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: Keys unique identifier.
+              example:
+                total_success: 2
+                total_failed: 0
+                successful_keys:
+                  - uuid: e8aa4fc6-5963-4f8b-92d3-6e136f0de859
+                  - uuid: 8cc1d96d-fbdd-409b-895c-84ed082f9597
+                failed_keys:
+                  -
+        '207':
+          description: | 
+            Request was partially successful.  
+            Some keys were created, and some failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    type: integer
+                    description: Total count of created keys.
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: Keys unique identifier.
+              example:
+                total_success: 2
+                total_failed: 2
+                successful_keys:
+                  - uuid: e8aa4fc6-5963-4f8b-92d3-6e136f0de859
+                  - uuid: 8cc1d96d-fbdd-409b-895c-84ed082f9597
+                failed_keys:
+                  - uuid: 48aac7fc-d611-4ada-a058-1aa32b36164b
+                    error: "Connection failed"
+                  - uuid: f9444c43-4ca8-4682-89fc-8f819265d916
+                    error: "Unexpected error occurred"
+        '400':
+          description: | 
+            One of the errors occurred:
+            - Missing required parameter
+            - Some of the parameters are not integers
+            - number_of_keys is zero
+        '404':
+          description: Server not found
+        '500':
+          description: Unexpected error occurred
