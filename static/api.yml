@@ -13,7 +13,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
         - name: tg_user_id
           in: query
           required: true
@@ -39,6 +39,107 @@ paths:
           description: Both name and uuid are required
         '404':
           description: Key not found
+        '500':
+          description: Unexpected error occurred
+    put:
+      tags:
+        - shadowtrail dynamic keys
+      description: Modify shadowtrail dynamic key (change related outline key)
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outline_key_uuid:
+                  type: string
+                  description: Outline key identifier.
+              required:
+                - outline_key_uuid
+      responses:
+        '200':
+          description: The key was successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Missing required parameters
+        '404':
+          description: key_id was not found
+        '500':
+          description: Unexpected error occurred
+    patch:
+      tags:
+        - shadowtrail dynamic keys
+      description: Modify dynamic key and associated outline key (set both is_active and currently_used to false)
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dynamic key and associated outline key updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Dynamic key not found
+        '500':
+          description: Unexpected error occurred
+  /keys:
+    post:
+      tags:
+        - shadowtrail dynamic keys
+      description: Create new shadowtrail dynamic key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tg_user_id:
+                  type: integer
+                  description: Unique identifier of telegram user.
+                outline_key_uuid:
+                  type: string
+                  description: Outline server location.
+              required:
+                - tg_user_id
+                - outline_key_uuid
+      responses:
+        '201':
+          description: The key was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        '400':
+          description: Missing required parameters
+        '404':
+          description: Outline key uuid not found
+        '409':
+          description: Shadowtrail dynamic key with provided tg_user_id already exists in database
         '500':
           description: Unexpected error occurred
   /locations:
@@ -158,13 +259,13 @@ paths:
                 location:
                   type: string
                   description: Outline server location.
-                provider:
-                  type: string
-                  description: VDS server provider.
+                provider_id:
+                  type: integer
+                  description: Unique server provider identifier
               required:
                 - api_url
                 - location
-                - provider
+                - provider_id
       responses:
         '201':
           description: Successfully created outline server
@@ -339,5 +440,7 @@ paths:
             - number_of_keys is zero
         '404':
           description: Server not found
+        '422':
+          description: All key creation attempts failed
         '500':
           description: Unexpected error occurred

@@ -14,12 +14,13 @@
 #### VDS
 
 1. Install docker, docker-compose, python, pip3, git, openssh-server on VDS.
-2. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
-3. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
-4. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
-5. Set up a domain for your server IP-address.
-6. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
-7. Stop project using command `docker compose -f docker-compose.yml down` if necessary.
+2. Set up ssh keys, turn off connection by password, reboot server.
+3. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
+4. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
+5. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
+6. Set up a domain for your server IP-address.
+7. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
+8. Stop project using command `docker compose -f docker-compose.yml down` if necessary.
 
 
 ---
@@ -72,16 +73,16 @@
 
 #### Table: `dynamic_key`
 
-| Column Name         | Data Type  | Constraints                    | Description                                                                                                                                   |
-|---------------------|------------|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| id                  | VARCHAR(9) | PRIMARY KEY, CHECK(LENGTH = 9) | Unique identifier. Always 9 symbols length.                                                                                                   |
-| tg_user_id          | BIGINT     | NOT NULL                       | Unique identifier of telegram bot user. References `tg_user(id)` in shadowtrail telegram bot database.                                        |
-| server              | VARCHAR    | NOT NULL                       | Outline server Hostname or IP address.                                                                                                        |
-| server_port         | INTEGER    | NOT NULL                       | Outline server port for access keys.                                                                                                          |
-| password            | VARCHAR    | NOT NULL                       | Outline VPN key password.                                                                                                                     |
-| method              | VARCHAR    | NOT NULL                       | Outline VPM key encryption method.                                                                                                            |
-| is_active           | BOOLEAN    | NOT NULL                       | Equals `true` if it is currently connected to telegram bot user with active VPN subscription otherwise equals `false`.                        |
-| fk_outline_key_uuid | UUID       | FOREIGN KEY, NOT NULL          | Foreign Key `fk_outline_key_uuid` references `outline_key(uuid)`.  <br/>Dynamic keys always referencing one of the standard Outline VPN Keys. |
+| Column Name         | Data Type | Constraints                                              | Description                                                                                                                                   |
+|---------------------|-----------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| id                  | INTEGER   | PRIMARY KEY, CHECK (id >= 100000000 AND id <= 999999999) | Unique identifier. Always 9 symbols length.                                                                                                   |
+| tg_user_id          | BIGINT    | NOT NULL                                                 | Unique identifier of telegram bot user. References `tg_user(id)` in shadowtrail telegram bot database.                                        |
+| server              | VARCHAR   | NOT NULL                                                 | Outline server Hostname or IP address.                                                                                                        |
+| server_port         | INTEGER   | NOT NULL                                                 | Outline server port for access keys.                                                                                                          |
+| password            | VARCHAR   | NOT NULL                                                 | Outline VPN key password.                                                                                                                     |
+| method              | VARCHAR   | NOT NULL                                                 | Outline VPM key encryption method.                                                                                                            |
+| is_active           | BOOLEAN   | NOT NULL                                                 | Equals `true` if it is currently connected to telegram bot user with active VPN subscription otherwise equals `false`.                        |
+| fk_outline_key_uuid | UUID      | FOREIGN KEY, NOT NULL                                    | Foreign Key `fk_outline_key_uuid` references `outline_key(uuid)`.  <br/>Dynamic keys always referencing one of the standard Outline VPN Keys. |
 
 ---
 ### Project Schema

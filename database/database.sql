@@ -46,7 +46,7 @@ CREATE TABLE outline_key (
 );
 
 CREATE TABLE dynamic_key (
-    id VARCHAR(9) CHECK (CHAR_LENGTH(id) = 9) PRIMARY KEY,
+    id BIGINT PRIMARY KEY CHECK (id >= 100000000 AND id <= 999999999),
     tg_user_id BIGINT NOT NULL,
     server VARCHAR NOT NULL,
     server_port INTEGER NOT NULL,

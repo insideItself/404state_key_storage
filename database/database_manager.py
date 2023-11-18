@@ -2,6 +2,8 @@ import psycopg2
 from config import POSTGRES_CREDENTIALS
 # import names
 import uuid
+import random
+import base64
 
 
 class DatabaseManager:
@@ -192,6 +194,122 @@ class DatabaseManager:
         except Exception as e:
             self.conn.rollback()
             raise e
+
+    def generate_unique_dynamic_key_id(self) -> int:
+        """Generate a unique 9-digit ID."""
+        while True:
+            new_id: int = random.randint(100000000, 999999999)
+            if not self.check_dynamic_key_id_exists(new_id):
+                return new_id
+
+    def check_dynamic_key_id_exists(self, id: int) -> bool:
+        """Check if a dynamic key ID already exists."""
+        query = "SELECT 1 FROM dynamic_key WHERE id = %s;"
+        self.cursor.execute(query, (id,))
+        return self.cursor.fetchone() is not None
+
+    def parse_access_url(self, access_url: str):
+        """Parse the access URL and extract server, server_port, password, and method."""
+        decoded_str = base64.b64decode(access_url.split('@')[0][5:]).decode('utf-8')
+        method, password = decoded_str.split(':')
+        server_port_str = access_url.split('@')[1].split('/')[0]
+        server, server_port = server_port_str.split(':')
+        return {
+            "server": server,
+            "server_port": int(server_port),
+            "password": password,
+            "method": method
+        }
+
+    def insert_dynamic_key(self, id: int, tg_user_id: int, server: str, server_port: int,
+                           password: str, method: str, is_active: bool, fk_outline_key_uuid: uuid.UUID):
+        """Insert a new dynamic key into the database with transaction management and update outline_key."""
+        try:
+            self.conn.autocommit = False  # Start transaction
+
+            # Insert into dynamic_key table
+            insert_query = """
+                INSERT INTO dynamic_key 
+                (id, tg_user_id, server, server_port, password, method, is_active, fk_outline_key_uuid)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            """
+            self.cursor.execute(insert_query,
+                                (id, tg_user_id, server, server_port, password, method, is_active, fk_outline_key_uuid))
+
+            # Update the outline_key table
+            update_query = """
+                UPDATE outline_key
+                SET currently_used = TRUE
+                WHERE uuid = %s;
+            """
+            self.cursor.execute(update_query, (fk_outline_key_uuid,))
+
+            self.conn.commit()  # Commit the transaction
+        except Exception as e:
+            self.conn.rollback()  # Rollback on error
+            raise e  # Re-raise the exception for handling outside
+        finally:
+            self.conn.autocommit = True  # Restore the autocommit setting
+
+    def check_outline_key_exists(self, outline_key_uuid: str) -> bool:
+        """Check if an outline key exists and is active."""
+        query = "SELECT 1 FROM outline_key WHERE uuid = %s;"
+        self.cursor.execute(query, (outline_key_uuid,))
+        return self.cursor.fetchone() is not None
+
+    def get_access_url_by_outline_key(self, outline_key_uuid: str) -> str:
+        """Get the access URL for a given outline key UUID."""
+        query = "SELECT access_url FROM outline_key WHERE uuid = %s;"
+        self.cursor.execute(query, (outline_key_uuid,))
+        result = self.cursor.fetchone()
+        return result[0] if result else None
+
+    def check_dynamic_key_exists_for_user(self, tg_user_id: int) -> bool:
+        """Check if a dynamic key already exists for the given tg_user_id."""
+        query = "SELECT 1 FROM dynamic_key WHERE tg_user_id = %s LIMIT 1;"
+        self.cursor.execute(query, (tg_user_id,))
+        return self.cursor.fetchone() is not None
+
+    def update_dynamic_key_is_active(self, key_id: int, is_active: bool) -> None:
+        try:
+            self.conn.autocommit = False  # Start transaction
+            update_query = "UPDATE dynamic_key SET is_active = %s WHERE id = %s;"
+            self.cursor.execute(update_query, (is_active, key_id))
+            self.conn.commit()  # Commit the transaction
+        except Exception as e:
+            self.conn.rollback()  # Rollback on error
+            raise e  # Re-raise the exception for handling outside
+        finally:
+            self.conn.autocommit = True  # Restore the autocommit setting
+
+    def check_dynamic_key_exists_by_id(self, key_id: int) -> bool:
+        query = "SELECT 1 FROM dynamic_key WHERE id = %s;"
+        self.cursor.execute(query, (key_id,))
+        return self.cursor.fetchone() is not None
+
+    def deactivate_dynamic_key_and_outline_key(self, key_id: int) -> None:
+        try:
+            self.conn.autocommit = False  # Start transaction
+
+            # Update dynamic_key table
+            update_dynamic_query = "UPDATE dynamic_key SET is_active = FALSE WHERE id = %s;"
+            self.cursor.execute(update_dynamic_query, (key_id,))
+
+            # Get the associated outline key UUID
+            get_uuid_query = "SELECT fk_outline_key_uuid FROM dynamic_key WHERE id = %s;"
+            self.cursor.execute(get_uuid_query, (key_id,))
+            fk_outline_key_uuid = self.cursor.fetchone()[0]
+
+            # Update the outline_key table
+            update_outline_query = "UPDATE outline_key SET currently_used = FALSE WHERE uuid = %s;"
+            self.cursor.execute(update_outline_query, (fk_outline_key_uuid,))
+
+            self.conn.commit()  # Commit the transaction
+        except Exception as e:
+            self.conn.rollback()  # Rollback on error
+            raise e  # Re-raise the exception for handling outside
+        finally:
+            self.conn.autocommit = True  # Restore the autocommit setting
 
     def close(self) -> None:
         self.cursor.close()

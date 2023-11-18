@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from app import app  # Import the Flask app
+from app import app
 import json
 import requests
 
@@ -79,6 +79,41 @@ def test_post_outline_keys_error_invalid_parameters(client):
     response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
     assert response.status_code == 400
     assert response.json == {"error": "Both outline_server_id and number_of_keys must be integers"}
+
+
+@pytest.mark.parametrize("missing_key", ["outline_server_id", "number_of_keys"])
+def test_post_outline_keys_error_missing_param(client, missing_key):
+    # Prepare data with one missing key
+    data: dict = {
+        "outline_server_id": 123,
+        "number_of_keys": 2
+    }
+    data.pop(missing_key)
+
+    # Send POST request
+    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+
+    # Assert the expected response
+    assert response.status_code == 400
+    assert response.json == {"error": f"Missing required parameters: {missing_key}"}
+
+
+def test_post_outline_keys_error_missing_all_params(client):
+    # Prepare data with one missing key
+    data: dict = {
+        "wrong_key": "wrong_value"
+    }
+
+    # Send POST request
+    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+
+    # Assert the expected response
+    assert response.status_code == 400
+    error_message = response.json.get("error")
+
+    # Check if all required parameters are mentioned in the error message
+    for param in ["outline_server_id", "number_of_keys"]:
+        assert param in error_message
 
 
 def test_post_outline_keys_error_number_of_keys_zero(client):

@@ -94,7 +94,16 @@ def create_outline_keys() -> tuple[Response, int]:
         for _ in range(number_of_keys):
             unique_uuid: uuid.uuid4 = db_manager.generate_unique_uuid()
             try:
-                post_response: requests.Response = requests.post(f"{api_url}/access-keys", verify=False)
+
+                # Specify the timeout duration (e.g., 3 seconds)
+                timeout_duration = 2
+
+                post_response: requests.Response = requests.post(
+                    f"{api_url}/access-keys",
+                    verify=False,
+                    timeout=timeout_duration
+                )
+
                 post_response.raise_for_status()
                 key_data = post_response.json()
                 key_id: str = key_data['id']
@@ -112,10 +121,19 @@ def create_outline_keys() -> tuple[Response, int]:
                 db_manager.insert_key(unique_uuid, key_id, server_id, access_url, False)
                 keys_created.append({"uuid": unique_uuid})
 
+            except requests.exceptions.Timeout:
+                # Handle the timeout case
+                keys_failed.append({"uuid": unique_uuid, "error": "Request timed out"})
+
             except RequestException as e:
                 keys_failed.append({"uuid": unique_uuid, "error": str(e)})
 
         db_manager.close()
+
+        # Check if all key creation attempts have failed
+        if not keys_created and keys_failed:
+            return jsonify(
+                {"error": "All key creation attempts failed", "details": [key["error"] for key in keys_failed]}), 422
 
         response_data: dict[str, any] = {
             "total_success": len(keys_created),

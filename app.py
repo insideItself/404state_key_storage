@@ -7,6 +7,7 @@ import socket
 from database.database_manager import DatabaseManager
 from routes.servers import servers_bp
 from routes.outline_keys import outline_keys_bp
+from routes.dynamic_keys import dynamic_keys_bp
 from routes.locations import locations_bp
 from routes.swagger import swagger_bp
 import urllib3
@@ -17,6 +18,7 @@ app = Flask(__name__)
 app.register_blueprint(swagger_bp)
 app.register_blueprint(servers_bp)
 app.register_blueprint(outline_keys_bp)
+app.register_blueprint(dynamic_keys_bp)
 app.register_blueprint(locations_bp)
 
 # @app.before_request
