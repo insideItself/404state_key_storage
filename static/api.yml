@@ -44,7 +44,7 @@ paths:
     put:
       tags:
         - shadowtrail dynamic keys
-      description: Modify shadowtrail dynamic key (change related outline key)
+      description: Modify dynamic key and associated outline key (set previous outline key param currently_used to false, new outline key currently_used to true, update dynamic key with data from new outline key and set dynamic key is_active = true)
       parameters:
         - name: key_id
           in: path
@@ -65,7 +65,7 @@ paths:
                 - outline_key_uuid
       responses:
         '200':
-          description: The key was successfully updated.
+          description: Dynamic key and associated outline key updated successfully
           content:
             application/json:
               schema:
@@ -74,9 +74,9 @@ paths:
                   message:
                     type: string
         '400':
-          description: Missing required parameters
+          description: Missing required parameter 'outline_key_uuid'
         '404':
-          description: key_id was not found
+          description: Outline key uuid not found or Dynamic key not found
         '500':
           description: Unexpected error occurred
     patch:
