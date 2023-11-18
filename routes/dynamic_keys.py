@@ -76,3 +76,36 @@ def patch_dynamic_key(key_id) -> tuple[Response, int]:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
     finally:
         db_manager.close()
+
+
+@dynamic_keys_bp.route("/keys/<int:key_id>", methods=['PUT'])
+def modify_dynamic_key(key_id) -> tuple[Response, int]:
+    db_manager = DatabaseManager()
+
+    try:
+        data = request.get_json()
+        if "outline_key_uuid" not in data:
+            return jsonify({"error": "Missing required parameter: 'outline_key_uuid'"}), 400
+
+        outline_key_uuid = data["outline_key_uuid"]
+        if not db_manager.check_outline_key_exists(outline_key_uuid):
+            return jsonify({"error": "Outline key uuid not found"}), 404
+
+        if not db_manager.check_dynamic_key_exists_by_id(key_id):
+            return jsonify({"error": "Dynamic key not found"}), 404
+
+        # Extract details from access_url for the new outline key
+        access_url = db_manager.get_access_url_by_outline_key(outline_key_uuid)
+        key_details = db_manager.parse_access_url(access_url)
+
+        # Update the dynamic key and associated outline key
+        db_manager.update_dynamic_key_with_new_outline_key(key_id, outline_key_uuid, key_details)
+
+        return jsonify({"message": "Dynamic key and associated outline key updated successfully"}), 200
+
+    except RequestException as e:
+        return jsonify({"error": "Failed to update dynamic key", "details": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+    finally:
+        db_manager.close()

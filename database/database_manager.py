@@ -311,6 +311,43 @@ class DatabaseManager:
         finally:
             self.conn.autocommit = True  # Restore the autocommit setting
 
+    def update_dynamic_key_with_new_outline_key(
+            self, key_id: int, new_outline_key_uuid: str, key_details: dict) -> None:
+        try:
+            self.conn.autocommit = False  # Start transaction
+
+            # Get the current outline key UUID associated with this dynamic key
+            get_current_uuid_query = "SELECT fk_outline_key_uuid FROM dynamic_key WHERE id = %s;"
+            self.cursor.execute(get_current_uuid_query, (key_id,))
+            current_uuid = self.cursor.fetchone()[0]
+
+            # Update the currently_used status of the current outline key to FALSE
+            if current_uuid:
+                update_current_outline_query = "UPDATE outline_key SET currently_used = FALSE WHERE uuid = %s;"
+                self.cursor.execute(update_current_outline_query, (current_uuid,))
+
+            # Update dynamic_key table with new details
+            update_dynamic_query = """
+                UPDATE dynamic_key
+                SET server = %s, server_port = %s, password = %s, method = %s, 
+                    is_active = TRUE, fk_outline_key_uuid = %s
+                WHERE id = %s;
+            """
+            self.cursor.execute(update_dynamic_query, (key_details["server"], key_details["server_port"],
+                                                       key_details["password"], key_details["method"],
+                                                       new_outline_key_uuid, key_id))
+
+            # Update the outline_key table for the new UUID
+            update_new_outline_query = "UPDATE outline_key SET currently_used = TRUE WHERE uuid = %s;"
+            self.cursor.execute(update_new_outline_query, (new_outline_key_uuid,))
+
+            self.conn.commit()  # Commit the transaction
+        except Exception as e:
+            self.conn.rollback()  # Rollback on error
+            raise e  # Re-raise the exception for handling outside
+        finally:
+            self.conn.autocommit = True  # Restore the autocommit setting
+
     def close(self) -> None:
         self.cursor.close()
         self.conn.close()
