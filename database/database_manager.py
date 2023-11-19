@@ -348,6 +348,23 @@ class DatabaseManager:
         finally:
             self.conn.autocommit = True  # Restore the autocommit setting
 
+    def get_dynamic_key_details(self, key_id: int, tg_user_id: int) -> dict | None:
+        query = """
+            SELECT server, server_port, password, method
+            FROM dynamic_key
+            WHERE id = %s AND tg_user_id = %s AND is_active = TRUE;
+        """
+        self.cursor.execute(query, (key_id, tg_user_id))
+        result = self.cursor.fetchone()
+        if result:
+            return {
+                "server": result[0],
+                "server_port": result[1],
+                "password": result[2],
+                "method": result[3]
+            }
+        return None
+
     def close(self) -> None:
         self.cursor.close()
         self.conn.close()

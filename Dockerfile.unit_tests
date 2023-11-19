@@ -1,0 +1,17 @@
+# Use the same base image as your application
+FROM python:3.11.3-alpine
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the dependencies file to the working directory
+COPY requirements.txt .
+
+# Install any dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the content of the local src directory to the working directory
+COPY . .
+
+# Command to run tests can be defined in docker-compose, so it's not needed here
+CMD ["python3", "-m", "pytest", "-vv"]

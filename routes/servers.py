@@ -4,11 +4,13 @@ from flask import Blueprint, jsonify, request, Response
 from database.database_manager import DatabaseManager
 import urllib3
 from urllib.parse import urlparse
+from config import auth
 
 servers_bp = Blueprint('servers', __name__)
 
 
 @servers_bp.route("/servers", methods=['GET'])
+@auth.login_required
 def get_outline_servers() -> tuple[Response, int]:
 
     db_manager: DatabaseManager = DatabaseManager()
@@ -30,6 +32,7 @@ def get_outline_servers() -> tuple[Response, int]:
 
 
 @servers_bp.route("/servers", methods=['POST'])
+@auth.login_required
 def create_outline_server() -> tuple[Response, int]:
     # suppress warning about self-signed certificate on an outline server
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

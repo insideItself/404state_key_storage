@@ -2,17 +2,41 @@ import pytest
 from unittest.mock import patch
 from app import app
 import json
+import base64
+from config import BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD
 
 
 @pytest.fixture
-def client():
+def auth_client():
     app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+    with app.test_client() as test_client:
+        # Encode credentials
+        credentials = base64.b64encode(f"{BASIC_AUTH_USERNAME}:{BASIC_AUTH_PASSWORD}".encode()).decode('utf-8')
+        # Set the Authorization header for all requests
+        test_client.environ_base['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
+        yield test_client
+
+
+@pytest.fixture
+def unauth_client():
+    app.config['TESTING'] = True
+    with app.test_client() as test_client:
+        # No Authorization header
+        yield test_client
+
+
+def test_put_dynamic_keys_error_unauthorized_access(unauth_client):
+
+    # Prepare data for POST request
+    data = {"key": "value"}
+
+    # Send POST request
+    response = unauth_client.put("/keys/1", data=json.dumps(data), content_type='application/json')
+    assert response.status_code == 401
 
 
 @patch('routes.dynamic_keys.DatabaseManager')
-def test_put_dynamic_keys_success(mock_db_manager, client):
+def test_put_dynamic_keys_success(mock_db_manager, auth_client):
     mock_db_instance = mock_db_manager.return_value
     key_id = 1
     new_outline_key_uuid = "new_uuid123"
@@ -31,7 +55,7 @@ def test_put_dynamic_keys_success(mock_db_manager, client):
 
     # Prepare request data
     data = {"outline_key_uuid": new_outline_key_uuid}
-    response = client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
+    response = auth_client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 200
@@ -44,7 +68,7 @@ def test_put_dynamic_keys_success(mock_db_manager, client):
 
 
 @patch('routes.dynamic_keys.DatabaseManager')
-def test_put_dynamic_keys_error_not_found(mock_db_manager, client):
+def test_put_dynamic_keys_error_not_found(mock_db_manager, auth_client):
     mock_db_instance = mock_db_manager.return_value
     key_id = 1
     new_outline_key_uuid = "new_uuid123"
@@ -54,17 +78,17 @@ def test_put_dynamic_keys_error_not_found(mock_db_manager, client):
 
     # Prepare request data
     data = {"outline_key_uuid": new_outline_key_uuid}
-    response = client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
+    response = auth_client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 404
     assert response.json == {"error": "Dynamic key not found"}
 
 
-def test_put_dynamic_keys_error_invalid_param(client):
+def test_put_dynamic_keys_error_invalid_param(auth_client):
     key_id = 1
     data = {"wrong_param": "some_value"}
-    response = client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
+    response = auth_client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 400
@@ -73,7 +97,7 @@ def test_put_dynamic_keys_error_invalid_param(client):
 
 
 @patch('routes.dynamic_keys.DatabaseManager')
-def test_put_dynamic_keys_error_internal_error(mock_db_manager, client):
+def test_put_dynamic_keys_error_internal_error(mock_db_manager, auth_client):
     mock_db_instance = mock_db_manager.return_value
     key_id = 1
     new_outline_key_uuid = "new_uuid123"
@@ -83,7 +107,7 @@ def test_put_dynamic_keys_error_internal_error(mock_db_manager, client):
 
     # Prepare request data
     data = {"outline_key_uuid": new_outline_key_uuid}
-    response = client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
+    response = auth_client.put(f"/keys/{key_id}", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 500

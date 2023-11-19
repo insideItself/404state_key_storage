@@ -3,19 +3,43 @@ from unittest.mock import patch, MagicMock
 from app import app
 import json
 import requests
+import base64
+from config import BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD
 
 
 @pytest.fixture
-def client():
+def auth_client():
     app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+    with app.test_client() as test_client:
+        # Encode credentials
+        credentials = base64.b64encode(f"{BASIC_AUTH_USERNAME}:{BASIC_AUTH_PASSWORD}".encode()).decode('utf-8')
+        # Set the Authorization header for all requests
+        test_client.environ_base['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
+        yield test_client
+
+
+@pytest.fixture
+def unauth_client():
+    app.config['TESTING'] = True
+    with app.test_client() as test_client:
+        # No Authorization header
+        yield test_client
+
+
+def test_post_outline_keys_error_unauthorized_access(unauth_client):
+
+    # Prepare data for POST request
+    data = {"key": "value"}
+
+    # Send POST request
+    response = unauth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    assert response.status_code == 401
 
 
 @patch('routes.outline_keys.requests.post')
 @patch('routes.outline_keys.requests.put')
 @patch('routes.outline_keys.DatabaseManager')
-def test_post_outline_keys_success_all_success(mock_db_manager, mock_put, mock_post, client):
+def test_post_outline_keys_success_all_success(mock_db_manager, mock_put, mock_post, auth_client):
     # Mock the database manager methods
     mock_db_instance = mock_db_manager.return_value
     mock_db_instance.check_server_exists_using_id.return_value = True
@@ -30,7 +54,7 @@ def test_post_outline_keys_success_all_success(mock_db_manager, mock_put, mock_p
     data = {"outline_server_id": 1, "number_of_keys": 2}
 
     # Send POST request
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 201
@@ -45,7 +69,7 @@ def test_post_outline_keys_success_all_success(mock_db_manager, mock_put, mock_p
 @patch('routes.outline_keys.requests.put')
 @patch('routes.outline_keys.requests.post')
 @patch('routes.outline_keys.DatabaseManager')
-def test_post_outline_keys_success_partial_success(mock_db_manager, mock_post, mock_put, client):
+def test_post_outline_keys_success_partial_success(mock_db_manager, mock_post, mock_put, auth_client):
     # Mock DatabaseManager methods
     mock_db_instance = mock_db_manager.return_value
     mock_db_instance.check_server_exists_using_id.return_value = True
@@ -63,7 +87,7 @@ def test_post_outline_keys_success_partial_success(mock_db_manager, mock_post, m
     data = {"outline_server_id": 1, "number_of_keys": 2}
 
     # Send POST request
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
 
     # Assertions
     assert response.status_code == 207
@@ -73,16 +97,16 @@ def test_post_outline_keys_success_partial_success(mock_db_manager, mock_post, m
     assert "failed_keys" in response.json and len(response.json["failed_keys"]) == 1
 
 
-def test_post_outline_keys_error_invalid_parameters(client):
+def test_post_outline_keys_error_invalid_parameters(auth_client):
     # Invalid parameter types (non-integer values)
     data = {"outline_server_id": "one", "number_of_keys": "two"}
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
     assert response.status_code == 400
     assert response.json == {"error": "Both outline_server_id and number_of_keys must be integers"}
 
 
 @pytest.mark.parametrize("missing_key", ["outline_server_id", "number_of_keys"])
-def test_post_outline_keys_error_missing_param(client, missing_key):
+def test_post_outline_keys_error_missing_param(auth_client, missing_key):
     # Prepare data with one missing key
     data: dict = {
         "outline_server_id": 123,
@@ -91,21 +115,21 @@ def test_post_outline_keys_error_missing_param(client, missing_key):
     data.pop(missing_key)
 
     # Send POST request
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
 
     # Assert the expected response
     assert response.status_code == 400
     assert response.json == {"error": f"Missing required parameters: {missing_key}"}
 
 
-def test_post_outline_keys_error_missing_all_params(client):
+def test_post_outline_keys_error_missing_all_params(auth_client):
     # Prepare data with one missing key
     data: dict = {
         "wrong_key": "wrong_value"
     }
 
     # Send POST request
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
 
     # Assert the expected response
     assert response.status_code == 400
@@ -116,31 +140,31 @@ def test_post_outline_keys_error_missing_all_params(client):
         assert param in error_message
 
 
-def test_post_outline_keys_error_number_of_keys_zero(client):
+def test_post_outline_keys_error_number_of_keys_zero(auth_client):
     # number_of_keys is zero
     data = {"outline_server_id": 1, "number_of_keys": 0}
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
     assert response.status_code == 400
     assert response.json == {"error": "number_of_keys cannot be zero"}
 
 
 @patch('routes.outline_keys.DatabaseManager')
-def test_post_outline_keys_error_server_not_found(mock_db_manager, client):
+def test_post_outline_keys_error_server_not_found(mock_db_manager, auth_client):
     mock_db_instance = mock_db_manager.return_value
     mock_db_instance.check_server_exists_using_id.return_value = False
 
     data = {"outline_server_id": 1, "number_of_keys": 2}
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
     assert response.status_code == 404
     assert response.json == {"error": "Server not found"}
 
 
 @patch('routes.outline_keys.DatabaseManager')
-def test_post_outline_keys_error_internal_error(mock_db_manager, client):
+def test_post_outline_keys_error_internal_error(mock_db_manager, auth_client):
     mock_db_instance = mock_db_manager.return_value
     mock_db_instance.check_server_exists_using_id.side_effect = Exception("Database error")
 
     data = {"outline_server_id": 1, "number_of_keys": 2}
-    response = client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
+    response = auth_client.post("/outline_keys", data=json.dumps(data), content_type='application/json')
     assert response.status_code == 500
     assert response.json == {"error": "An unexpected error occurred", "details": "Database error"}

@@ -1,11 +1,15 @@
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, jsonify, request, Response, current_app
 from database.database_manager import DatabaseManager
+# from app import auth
+from config import auth
 
 locations_bp = Blueprint('locations', __name__)
 
 
 @locations_bp.route("/locations", methods=['GET'])
+@auth.login_required
 def get_locations() -> tuple[Response, int]:
+
     db_manager: DatabaseManager = DatabaseManager()
 
     try:

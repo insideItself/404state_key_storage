@@ -42,6 +42,8 @@ paths:
         '500':
           description: Unexpected error occurred
     put:
+      security:
+        - basicAuth: []
       tags:
         - shadowtrail dynamic keys
       description: Modify dynamic key and associated outline key (set previous outline key param currently_used to false, new outline key currently_used to true, update dynamic key with data from new outline key and set dynamic key is_active = true)
@@ -75,11 +77,15 @@ paths:
                     type: string
         '400':
           description: Missing required parameter 'outline_key_uuid'
+        '401':
+          description: Unauthorized Access
         '404':
           description: Outline key uuid not found or Dynamic key not found
         '500':
           description: Unexpected error occurred
     patch:
+      security:
+        - basicAuth: []
       tags:
         - shadowtrail dynamic keys
       description: Modify dynamic key and associated outline key (set both is_active and currently_used to false)
@@ -99,12 +105,16 @@ paths:
                 properties:
                   message:
                     type: string
+        '401':
+          description: Unauthorized Access
         '404':
           description: Dynamic key not found
         '500':
           description: Unexpected error occurred
   /keys:
     post:
+      security:
+        - basicAuth: []
       tags:
         - shadowtrail dynamic keys
       description: Create new shadowtrail dynamic key.
@@ -136,6 +146,8 @@ paths:
                     type: string
         '400':
           description: Missing required parameters
+        '401':
+          description: Unauthorized Access
         '404':
           description: Outline key uuid not found
         '409':
@@ -144,6 +156,8 @@ paths:
           description: Unexpected error occurred
   /locations:
     get:
+      security:
+        - basicAuth: []
       tags:
         - locations
       description: | 
@@ -190,10 +204,14 @@ paths:
                   - location: USA
                     location_ru: США
                     iso: US
+        '401':
+          description: Unauthorized Access
         '500':
           description: Unexpected error occurred
   /servers:
     get:
+      security:
+        - basicAuth: []
       tags:
         - servers
       description: Return servers identifiers and their locations.
@@ -236,11 +254,15 @@ paths:
                   - id: 2
                     location: USA
                     unused_keys: 0
+        '401':
+          description: Unauthorized Access
         '404':
           description: Location not found
         '500':
           description: Unexpected error occurred
     post:
+      security:
+        - basicAuth: []
       tags:
         - servers
       description: |
@@ -279,6 +301,8 @@ paths:
                     description: Server unique identifier.
         '400':
           description: Missing required parameters
+        '401':
+          description: Unauthorized Access
         '404':
           description: Server was found but unexpected error occurred
         '409':
@@ -289,6 +313,8 @@ paths:
           description: Unexpected error occurred
   /outline_keys/{outline_server_id}:
     get:
+      security:
+        - basicAuth: []
       tags:
         - outline keys
       description: Return list of outline keys from outline server
@@ -350,12 +376,16 @@ paths:
             One of the errors occurred:  
             - Invalid 'currently_used' parameter value. It must be 'true' or 'false';  
             - Invalid 'limit' parameter. It must be a positive integer.
+        '401':
+          description: Unauthorized Access
         '404':
           description: Server not found
         '500':
           description: Unexpected error occurred
   /outline_keys:
     post:
+      security:
+        - basicAuth: []
       tags:
         - outline keys
       description: Create a single or multiple outline keys.
@@ -438,9 +468,17 @@ paths:
             - Missing required parameter
             - Some of the parameters are not integers
             - number_of_keys is zero
+        '401':
+          description: Unauthorized Access
         '404':
           description: Server not found
         '422':
           description: All key creation attempts failed
         '500':
           description: Unexpected error occurred
+
+components:
+  securitySchemes:
+    basicAuth:     # Name of the security scheme
+      type: http
+      scheme: basic

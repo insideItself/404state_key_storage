@@ -5,11 +5,13 @@ from database.database_manager import DatabaseManager
 import urllib3
 # from urllib.parse import urlparse
 import uuid
+from config import auth
 
 outline_keys_bp = Blueprint('outline_keys', __name__)
 
 
 @outline_keys_bp.route("/outline_keys/<int:outline_server_id>", methods=['GET'])
+@auth.login_required
 def get_outline_keys(outline_server_id: int) -> tuple[Response, int]:
 
     db_manager: DatabaseManager = DatabaseManager()
@@ -48,6 +50,7 @@ def get_outline_keys(outline_server_id: int) -> tuple[Response, int]:
 
 
 @outline_keys_bp.route("/outline_keys", methods=['POST'])
+@auth.login_required
 def create_outline_keys() -> tuple[Response, int]:
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

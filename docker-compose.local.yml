@@ -46,3 +46,14 @@ services:
       timeout: 60s
       retries: 5
       start_period: 80s
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.unit_tests  # Your test Dockerfile
+    depends_on:
+      - database
+    env_file:
+      - ./.env
+    environment:
+      - DOCKER_CONTAINER=1

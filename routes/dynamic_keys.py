@@ -2,14 +2,39 @@ import requests
 from requests.exceptions import RequestException
 from flask import Blueprint, jsonify, request, Response
 from database.database_manager import DatabaseManager
+from flask_cors import cross_origin
 # import urllib3
 # from urllib.parse import urlparse
 import uuid
+from config import auth
 
 dynamic_keys_bp = Blueprint('dynamic_keys', __name__)
 
 
+@dynamic_keys_bp.route("/keys/<int:key_id>", methods=['GET'])
+@cross_origin()  # turn on CORS to make this endpoint available from Outline Client
+def get_dynamic_key(key_id) -> tuple[Response, int]:
+    db_manager = DatabaseManager()
+    tg_user_id = request.args.get('tg_user_id', type=int)
+
+    if not tg_user_id:
+        return jsonify({"error": "Both key_id and tg_user_id are required"}), 400
+
+    try:
+        key_details = db_manager.get_dynamic_key_details(key_id, tg_user_id)
+        if not key_details:
+            return jsonify({"error": "Key not found or inactive"}), 404
+
+        return jsonify(key_details), 200
+
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+    finally:
+        db_manager.close()
+
+
 @dynamic_keys_bp.route("/keys", methods=['POST'])
+@auth.login_required
 def create_dynamic_key() -> tuple[Response, int]:
 
     # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -58,6 +83,7 @@ def create_dynamic_key() -> tuple[Response, int]:
 
 
 @dynamic_keys_bp.route("/keys/<int:key_id>", methods=['PATCH'])
+@auth.login_required
 def patch_dynamic_key(key_id) -> tuple[Response, int]:
 
     db_manager = DatabaseManager()
@@ -79,6 +105,7 @@ def patch_dynamic_key(key_id) -> tuple[Response, int]:
 
 
 @dynamic_keys_bp.route("/keys/<int:key_id>", methods=['PUT'])
+@auth.login_required
 def modify_dynamic_key(key_id) -> tuple[Response, int]:
     db_manager = DatabaseManager()
 

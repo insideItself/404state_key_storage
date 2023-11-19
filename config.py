@@ -1,7 +1,6 @@
 import os
-# from werkzeug.security import generate_password_hash, check_password_hash
-from flask import request, abort
-import hmac
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 
 """
 This code first checks whether the DOCKER_CONTAINER environment variable is set.
@@ -39,5 +38,17 @@ POSTGRES_CREDENTIALS: dict[str, str] = {
     "port": POSTGRES_PORT
 }
 
+"""
+flask application auth related shit
+"""
+
 BASIC_AUTH_USERNAME = os.getenv("BASIC_AUTH_USERNAME")
 BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD")
+
+auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(username, password):
+    return username == BASIC_AUTH_USERNAME and \
+           check_password_hash(generate_password_hash(BASIC_AUTH_PASSWORD), password)

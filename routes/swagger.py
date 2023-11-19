@@ -1,8 +1,10 @@
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask import Blueprint
+from flask import Blueprint, redirect, url_for
+from config import auth
 
-SWAGGER_URL: str = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
-API_URL: str = '/static/api.yml'  # Our API url (can of course be a local resource)
+
+API_URL: str = '/static/api.yml'
+SWAGGER_URL: str = '/api/docs'
 
 # Call factory function to create our blueprint
 swagger_bp: Blueprint = get_swaggerui_blueprint(
@@ -10,13 +12,13 @@ swagger_bp: Blueprint = get_swaggerui_blueprint(
     API_URL,
     config={  # Swagger UI config overrides
         'app_name': "ShadowTrail VPN Key Storage API"
-    },
-    # oauth_config={  # OAuth config. See https://github.com/swagger-api/swagger-ui#oauth2-configuration .
-    #    'clientId': "your-client-id",
-    #    'clientSecret': "your-client-secret-if-required",
-    #    'realm': "your-realms",
-    #    'appName': "your-app-name",
-    #    'scopeSeparator': " ",
-    #    'additionalQueryStringParams': {'test': "hello"}
-    # }
+    }
 )
+
+
+# Apply authentication to all routes in the blueprint
+@swagger_bp.before_request
+@auth.login_required
+def before_request():
+    # This will require authentication for every route in the blueprint
+    pass

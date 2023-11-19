@@ -6,10 +6,12 @@
 2. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
 3. Create directory for your database, for example `./database_for_project`.
 4. Install `mkcert` and setup SSL certificates for localhost: https://github.com/FiloSottile/mkcert. Specify path to your certificates in `.env` file.
-5. Run project using command `docker compose -f docker-compose.local.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
+5. Run project using command `docker compose -f docker-compose.local.yml up -d --build --scale app=1 app nginx database`
+`. Use app=number to specify number of web-servers that you want to use.
 6. Stop project using command `docker compose -f docker-compose.local.yml down` if necessary.
 7. If you want to run just database and test app running it manually, first you need to run database instance via docker `docker compose -f docker-compose.local.yml up --build -d database`
-8. Run tests using `python3 -m pytest -vv` command.
+8. Run tests using `docker compose -f docker-compose.local.yml run --rm tests` or using `python3 -m pytest -vv` command with your local python interpreter.
+
 
 #### VDS
 
@@ -19,8 +21,9 @@
 4. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
 5. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
 6. Set up a domain for your server IP-address.
-7. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1`. Use app=number to specify number of web-servers that you want to use.
+7. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1 app nginx-proxy letsencrypt database`. Use app=number to specify number of web-servers that you want to use.
 8. Stop project using command `docker compose -f docker-compose.yml down` if necessary.
+9. Run tests using `docker compose -f docker-compose.yml run --rm tests` or using `python3 -m pytest -vv` command with your local python interpreter.
 
 
 ---
@@ -75,7 +78,7 @@
 
 | Column Name         | Data Type | Constraints                                              | Description                                                                                                                                   |
 |---------------------|-----------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| id                  | INTEGER   | PRIMARY KEY, CHECK (id >= 100000000 AND id <= 999999999) | Unique identifier. Always 9 symbols length.                                                                                                   |
+| id                  | INTEGER   | PRIMARY KEY, CHECK (id >= 100000000 AND id <= 999999999) | Unique identifier. Always 9 integer length.                                                                                                   |
 | tg_user_id          | BIGINT    | NOT NULL                                                 | Unique identifier of telegram bot user. References `tg_user(id)` in shadowtrail telegram bot database.                                        |
 | server              | VARCHAR   | NOT NULL                                                 | Outline server Hostname or IP address.                                                                                                        |
 | server_port         | INTEGER   | NOT NULL                                                 | Outline server port for access keys.                                                                                                          |
@@ -105,4 +108,4 @@
 
 Shadowtrail Key Storage REST API follows the OpenAPI specification that can be found at statis/api.yml.
 
-In addition to the above, you can find an interactive version of this documentation on your local instance at `your_hostname/api/docs` after running project.
+In addition to the above, you can find an interactive version of this documentation on your local instance at `your_hostname/api/docs` after running project, but before that you need to uncomment 19 row in app.py or you can just go to https://editor.swagger.io/ and paste file contents here.
