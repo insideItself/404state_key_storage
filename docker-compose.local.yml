@@ -50,7 +50,7 @@ services:
   tests:
     build:
       context: .
-      dockerfile: Dockerfile.unit_tests  # Your test Dockerfile
+      dockerfile: Dockerfile.unit_tests
     depends_on:
       - database
     env_file:
