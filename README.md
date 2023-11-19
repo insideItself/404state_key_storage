@@ -15,15 +15,16 @@
 
 #### VDS
 
-1. Install docker, docker-compose, python, pip3, git, openssh-server on VDS.
+1. Install docker, docker-compose, python, pip3, git with `server_set_up.sh` file in the root directory.
 2. Set up ssh keys, turn off connection by password, reboot server.
-3. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
-4. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
-5. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
-6. Set up a domain for your server IP-address.
-7. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1 app nginx-proxy letsencrypt database`. Use app=number to specify number of web-servers that you want to use.
-8. Stop project using command `docker compose -f docker-compose.yml down` if necessary.
-9. Run tests using `docker compose -f docker-compose.yml run --rm tests` or using `python3 -m pytest -vv` command with your local python interpreter.
+3. Add ssh key of vds server to current repository.
+4. Clone project using command `git clone git@github.com:insideItself/404state_key_storage.git`
+5. Create `.env`-file in main project directory that will contains project credentials. Use file `.env.EXAMPLE` as example.
+6. Create directory for your database on VDS, for example `/opt/database_for_project`, specify path to database in `.env` file, give permission to postgres user to operate this directory with: `sudo chown -R 999:999 /opt/database_for_project`
+7. Set up a domain for your server IP-address.
+8. Run project using command `docker compose -f docker-compose.yml up -d --build --scale app=1 app nginx-proxy letsencrypt database`. Use app=number to specify number of web-servers that you want to use.
+9. Stop project using command `docker compose -f docker-compose.yml down` if necessary.
+10. Run tests using `docker compose -f docker-compose.yml run --rm tests` or using `python3 -m pytest -vv` command with your local python interpreter.
 
 
 ---
