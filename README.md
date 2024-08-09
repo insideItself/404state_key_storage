@@ -107,6 +107,6 @@
 ---
 ## API
 
-Shadowtrail Key Storage REST API follows the OpenAPI specification that can be found at statis/api.yml.
+Shadowtrail Key Storage REST API follows the OpenAPI specification that can be found at statiс/api.yml.
 
 In addition to the above, you can find an interactive version of this documentation on your local instance at `your_hostname/api/docs` after running project, but before that you need to uncomment 19 row in app.py or you can just go to https://editor.swagger.io/ and paste file contents here.
